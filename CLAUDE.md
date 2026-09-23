@@ -19,6 +19,8 @@ make -j"$(nproc)"
 ./cool-retro-term --default-settings --verbose   # ignore stored settings, log profile/settings JSON
 ```
 
+Rerunning `qmake` in an existing build dir only regenerates the top-level Makefile. `app/Makefile` keeps its old `APP_VERSION` define, and qmake doesn't track define changes. To get the current `git describe` version into the binary, run `make qmake_all`, delete `app/main.o`, then `make`.
+
 Packaging: `scripts/build-appimage.sh` (Linux, uses linuxdeploy) and `scripts/build-dmg.sh` (macOS, uses macdeployqt). CI (`.github/workflows/release.yml`) runs both of these on pushes to master and on tags. There are no tests and no lint setup.
 
 ## Architecture
