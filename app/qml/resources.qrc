@@ -39,6 +39,8 @@
         <file>fonts/atari-400-800/AtariClassic-Regular.ttf</file>
         <file>fonts/pet-me/PetMe64.ttf</file>
         <file>fonts/pet-me/PetMe.ttf</file>
+        <file>fonts/dec-vt100/DEC-VT100.ttf</file>
+        <file>fonts/glass-tty-vt220/Glass_TTY_VT220.ttf</file>
         <file>BurnInEffect.qml</file>
         <file>fonts/terminus/TerminessNerdFontMono-Regular.ttf</file>
         <file>fonts/departure-mono/DepartureMonoNerdFontMono-Regular.otf</file>

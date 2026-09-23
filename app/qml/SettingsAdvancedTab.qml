@@ -60,6 +60,12 @@ ColumnLayout {
                 onCheckedChanged: appSettings.blinkingCursor = checked
             }
             CheckBox {
+                id: backspaceSendsDelete
+                text: qsTr("Backspace sends Delete")
+                checked: appSettings.backspaceSendsDelete
+                onCheckedChanged: appSettings.backspaceSendsDelete = checked
+            }
+            CheckBox {
                 id: showMenubar
                 text: qsTr("Show Menubar")
                 enabled: !appSettings.isMacOS

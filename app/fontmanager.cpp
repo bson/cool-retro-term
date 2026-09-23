@@ -299,6 +299,14 @@ void FontManager::populateBundledFonts()
         true,
         "UNSCII_8_SCALED");
     addBundledFont(
+        "DEC_VT100_SCALED",
+        "DEC VT100",
+        ":/fonts/dec-vt100/DEC-VT100.ttf",
+        0.5,
+        10,
+        true,
+        "UNSCII_8_SCALED");
+    addBundledFont(
         "IBM_EGA_8x8",
         "IBM EGA 8x8",
         ":/fonts/oldschool-pc-fonts/PxPlus_IBM_EGA_8x8.ttf",
@@ -354,6 +362,13 @@ void FontManager::populateBundledFonts()
         "IBM_3278",
         "IBM 3278",
         ":/fonts/ibm-3278/3270NerdFontMono-Regular.ttf",
+        1.0,
+        32,
+        false);
+    addBundledFont(
+        "GLASS_TTY_VT220",
+        "Glass TTY VT220",
+        ":/fonts/glass-tty-vt220/Glass_TTY_VT220.ttf",
         1.0,
         32,
         false);

@@ -52,6 +52,7 @@ QtObject {
     property real burnInQuality: 0.5
 
     property bool blinkingCursor: false
+    property bool backspaceSendsDelete: false
 
 
     // PROFILE SETTINGS ///////////////////////////////////////////////////////
@@ -97,7 +98,11 @@ QtObject {
     property real screenRadius: Utils.lint(4.0, 120.0, _screenRadius)
 
     property real _margin: 0.5
-    property real margin: Utils.lint(1.0, 40.0, _margin) + (1.0 - Math.SQRT1_2) * screenRadius
+    // Top/bottom margin as a fraction of the side margin setting.
+    property real _verticalMargin: 1.0
+    readonly property real _cornerMargin: (1.0 - Math.SQRT1_2) * screenRadius
+    property real margin: Utils.lint(1.0, 40.0, _margin) + _cornerMargin
+    property real verticalMargin: Utils.lint(1.0, 40.0, _margin) * _verticalMargin + _cornerMargin
 
     readonly property bool frameEnabled: ambientLight > 0 || _frameSize > 0 || screenCurvature > 0
 
@@ -197,7 +202,9 @@ QtObject {
             "fontWidth": fontWidth,
             "lineSpacing": lineSpacing,
             "margin": _margin,
+            "verticalMargin": _verticalMargin,
             "blinkingCursor": blinkingCursor,
+            "backspaceSendsDelete": backspaceSendsDelete,
             "frameSize": _frameSize,
             "screenRadius": _screenRadius,
             "frameColor": _frameColor,
@@ -303,12 +310,17 @@ QtObject {
         lineSpacing = settings.lineSpacing !== undefined ? settings.lineSpacing : lineSpacing
 
         _margin = settings.margin !== undefined ? settings.margin : _margin
+        // Profiles saved before this setting existed had equal margins, so a
+        // missing key means 100% rather than keeping the previous profile's value.
+        _verticalMargin = settings.verticalMargin !== undefined ? settings.verticalMargin : 1.0
         _frameSize = settings.frameSize !== undefined ? settings.frameSize : _frameSize
         _screenRadius = settings.screenRadius !== undefined ? settings.screenRadius : _screenRadius
         _frameColor = settings.frameColor !== undefined ? settings.frameColor : _frameColor
         _frameShininess = settings.frameShininess !== undefined ? settings.frameShininess : _frameShininess
 
         blinkingCursor = settings.blinkingCursor !== undefined ? settings.blinkingCursor : blinkingCursor
+        // Missing in profiles saved before this option existed; those sent ^H.
+        backspaceSendsDelete = settings.backspaceSendsDelete !== undefined ? settings.backspaceSendsDelete : false
     }
 
     function storeCustomProfiles() {
@@ -667,6 +679,42 @@ QtObject {
                 "frameSize": 0,
                 "frameColor": "#ffffff",
                 "frameShininess": 0.2
+            }'
+            builtin: true
+        }
+        ListElement {
+            text: "DEC VT100"
+            obj_string: '{
+                "ambientLight": 0.5866,
+                "backgroundColor": "#141c1a",
+                "bloom": 0.0981,
+                "brightness": 1,
+                "burnIn": 0,
+                "chromaColor": 0,
+                "contrast": 0.9441,
+                "flickering": 0.0445,
+                "fontColor": "#48c0ff",
+                "fontName": "DEC_VT100_SCALED",
+                "fontSource": 0,
+                "fontWidth": 0.95,
+                "lineSpacing": 0.04,
+                "glowingLine": 0,
+                "horizontalSync": 0,
+                "jitter": 0.0517,
+                "rasterization": 1,
+                "rgbShift": 0,
+                "saturationColor": 0,
+                "screenCurvature": 0.1043,
+                "screenRadius": 0.645,
+                "staticNoise": 0.0285,
+                "windowOpacity": 1,
+                "margin": 3,
+                "verticalMargin": 0.2347,
+                "blinkingCursor": true,
+                "backspaceSendsDelete": true,
+                "frameSize": 1,
+                "frameColor": "#010101",
+                "frameShininess": 0.5567
             }'
             builtin: true
         }

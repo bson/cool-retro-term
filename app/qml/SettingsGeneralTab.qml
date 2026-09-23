@@ -208,8 +208,19 @@ ColumnLayout {
                 text: qsTr("Margin")
             }
             SimpleSlider {
+                // Extends past 100% rather than rescaling, so saved profiles keep
+                // their margins; wide values are needed to mimic e.g. the VT100.
+                maximumValue: 3.0
                 onValueChanged: appSettings._margin = value
                 value: appSettings._margin
+            }
+            Label {
+                text: qsTr("Top/bottom margin")
+            }
+            SimpleSlider {
+                maximumValue: 3.0
+                onValueChanged: appSettings._verticalMargin = value
+                value: appSettings._verticalMargin
             }
             Label {
                 text: qsTr("Radius")

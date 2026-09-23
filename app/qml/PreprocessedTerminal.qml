@@ -98,11 +98,12 @@ Item{
 
         property int textureResolutionScale: appSettings.lowResolutionFont ? Screen.devicePixelRatio : 1
         property int margin: appSettings.margin / screenScaling
+        property int verticalMargin: appSettings.verticalMargin / screenScaling
         property int totalWidth: Math.floor(parent.width / (screenScaling * fontWidth))
         property int totalHeight: Math.floor(parent.height / screenScaling)
 
         property int rawWidth: totalWidth - 2 * margin
-        property int rawHeight: totalHeight - 2 * margin
+        property int rawHeight: totalHeight - 2 * verticalMargin
 
         textureSize: Qt.size(width / textureResolutionScale, height / textureResolutionScale)
 
@@ -116,6 +117,18 @@ Item{
 
         fullCursorHeight: true
         blinkingCursor: appSettings.blinkingCursor
+
+        // The keytab maps plain Backspace to ^H, so send DEL (ASCII 127) ahead of
+        // the widget. Accepting the event skips the widget's own key handling,
+        // which only restarts the cursor blink timer. Modified Backspace keeps its
+        // keytab mapping.
+        Keys.onPressed: function(event) {
+            if (appSettings.backspaceSendsDelete && event.key === Qt.Key_Backspace
+                    && !(event.modifiers & (Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier))) {
+                ksession.sendText("\x7f")
+                event.accepted = true
+            }
+        }
 
         colorScheme: "cool-retro-term"
 
@@ -214,6 +227,7 @@ Item{
 
     MouseArea {
         property real margin: appSettings.margin
+        property real verticalMargin: appSettings.verticalMargin
         property real frameSize: appSettings.frameSize * terminalWindow.normalizedWindowScale
 
         acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
@@ -251,7 +265,7 @@ Item{
 
         function correctDistortion(x, y) {
             x = (x - margin) / width;
-            y = (y - margin) / height;
+            y = (y - verticalMargin) / height;
 
             x = x * (1 + frameSize * 2) - frameSize;
             y = y * (1 + frameSize * 2) - frameSize;
@@ -272,7 +286,7 @@ Item{
         wrapMode: ShaderEffectSource.Repeat
         visible: false
         textureSize: Qt.size(kterminal.totalWidth * scaleTexture, kterminal.totalHeight * scaleTexture)
-        sourceRect: Qt.rect(-kterminal.margin, -kterminal.margin, kterminal.totalWidth, kterminal.totalHeight)
+        sourceRect: Qt.rect(-kterminal.margin, -kterminal.verticalMargin, kterminal.totalWidth, kterminal.totalHeight)
     }
 
     Item {
