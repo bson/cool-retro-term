@@ -121,8 +121,8 @@ ColumnLayout {
 
                             delete profileObject.name
 
-                            appSettings.appendCustomProfile(name,
-                                                            JSON.stringify(
+                            appSettings.saveCustomProfile(name,
+                                                          JSON.stringify(
                                                                 profileObject))
                         } catch (err) {
                             messageDialog.text = qsTr(err)
@@ -252,8 +252,8 @@ ColumnLayout {
     InsertNameDialog {
         id: insertname
         onNameSelected: {
-            appSettings.appendCustomProfile(name,
-                                            appSettings.composeProfileString())
+            appSettings.saveCustomProfile(name,
+                                          appSettings.composeProfileString())
         }
     }
     MessageDialog {

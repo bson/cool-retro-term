@@ -48,6 +48,13 @@ Window {
         var profile_list = appSettings.profilesList
         if (name === "")
             return 1
+        // Saving over a custom profile replaces it, but built-ins can't be
+        // replaced and a second entry with the same name couldn't be selected.
+        for (var i = 0; i < profile_list.count; i++) {
+            var profile = profile_list.get(i)
+            if (profile.builtin && profile.text === name)
+                return 2
+        }
         return 0
     }
 
@@ -77,6 +84,10 @@ Window {
                     case 1:
                         errorDialog.showError(
                                     qsTr("The name you inserted is empty. Please choose a different one."))
+                        break
+                    case 2:
+                        errorDialog.showError(
+                                    qsTr("A built-in profile already uses this name. Please choose a different one."))
                         break
                     default:
                         nameSelected(name)

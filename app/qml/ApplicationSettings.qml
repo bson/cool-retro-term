@@ -366,12 +366,29 @@ QtObject {
         loadProfileString(profile.obj_string)
     }
 
-    function appendCustomProfile(name, profileString) {
-        profilesList.append({
-                                "text": name,
-                                "obj_string": profileString,
-                                "builtin": false
-                            })
+    function saveCustomProfile(name, profileString) {
+        // Profiles are looked up by name, so saving over an existing custom
+        // profile replaces it in place and drops any older duplicates rather
+        // than adding another entry that can never be selected by name.
+        var existing = -1
+        for (var i = profilesList.count - 1; i >= 0; i--) {
+            var profile = profilesList.get(i)
+            if (profile.builtin || profile.text !== name)
+                continue
+            if (existing !== -1)
+                profilesList.remove(existing)
+            existing = i
+        }
+
+        var entry = {
+            "text": name,
+            "obj_string": profileString,
+            "builtin": false
+        }
+        if (existing !== -1)
+            profilesList.set(existing, entry)
+        else
+            profilesList.append(entry)
     }
 
     // PROFILES ///////////////////////////////////////////////////////////////
