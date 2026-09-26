@@ -31,7 +31,7 @@
 QString getNamedArgument(QStringList args, QString name, QString defaultName)
 {
     int index = args.indexOf(name);
-    return (index != -1) ? args[index + 1] : QString(defaultName);
+    return (index != -1 && index + 1 < args.size()) ? args[index + 1] : QString(defaultName);
 }
 
 QString getNamedArgument(QStringList args, QString name)
@@ -64,7 +64,7 @@ int main(int argc, char *argv[])
 
     if (argc>1 && (!strcmp(argv[1],"-h") || !strcmp(argv[1],"--help"))) {
         QTextStream cout(stdout, QIODevice::WriteOnly);
-        cout << "Usage: " << argv[0] << " [--default-settings] [--workdir <dir>] [--program <prog>] [-p|--profile <prof>] [--fullscreen] [-h|--help]" << Qt::endl;
+        cout << "Usage: " << argv[0] << " [--default-settings] [--workdir <dir>] [-p|--profile <prof>] [--fullscreen] [-h|--help] [-e <cmd> [args...]]" << Qt::endl;
         cout << "  --default-settings  Run cool-retro-term with the default settings" << Qt::endl;
         cout << "  --workdir <dir>     Change working directory to 'dir'" << Qt::endl;
         cout << "  -e <cmd>            Command to execute. This option will catch all following arguments, so use it as the last option." << Qt::endl;
@@ -116,18 +116,21 @@ int main(int argc, char *argv[])
     // Manage command line arguments from the cpp side
     QStringList args = app.arguments();
 
-    // Manage default command
-    QStringList cmdList;
-    if (args.contains("-e")) {
-        cmdList << args.mid(args.indexOf("-e") + 1);
-    }
+    // Everything after -e belongs to the command (e.g. "ssh -p 22"), so our own
+    // options are only looked up before it.
+    int cmdIndex = args.indexOf("-e");
+    QStringList ownArgs = (cmdIndex == -1) ? args : args.mid(0, cmdIndex);
+    QStringList cmdList = (cmdIndex == -1) ? QStringList() : args.mid(cmdIndex + 1);
     QVariant command(cmdList.empty() ? QVariant() : cmdList[0]);
     QVariant commandArgs(cmdList.size() <= 1 ? QVariant() : QVariant(cmdList.mid(1)));
     engine.rootContext()->setContextProperty("appVersion", appVersion);
     engine.rootContext()->setContextProperty("defaultCmd", command);
     engine.rootContext()->setContextProperty("defaultCmdArgs", commandArgs);
 
-    engine.rootContext()->setContextProperty("workdir", getNamedArgument(args, "--workdir", QDir::currentPath()));
+    engine.rootContext()->setContextProperty("workdir", getNamedArgument(ownArgs, "--workdir", QDir::currentPath()));
+    engine.rootContext()->setContextProperty("startupProfile",
+        getNamedArgument(ownArgs, "--profile", getNamedArgument(ownArgs, "-p")));
+    engine.rootContext()->setContextProperty("startupFullscreen", ownArgs.contains("--fullscreen"));
     engine.rootContext()->setContextProperty("fileIO", &fileIO);
 
     // Manage import paths for Linux and OSX.

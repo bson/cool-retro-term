@@ -46,13 +46,21 @@ QtObject {
 
     property ListModel windowsModel: ListModel { }
 
+    // --fullscreen applies only to the first window, not to later "New Window" ones.
+    property bool pendingFullscreen: startupFullscreen
+
     function createWindow() {
-        var window = windowComponent.createObject(null)
+        var window = windowComponent.createObject(null, { fullscreen: pendingFullscreen })
         if (!window)
             return
+        pendingFullscreen = false
 
         windowsModel.append({ window: window })
-        window.show()
+        // Plain show() would reset the window to normal state, so pick the matching variant.
+        if (window.fullscreen)
+            window.showFullScreen()
+        else
+            window.show()
         window.requestActivate()
     }
 

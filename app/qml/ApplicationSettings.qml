@@ -927,9 +927,8 @@ QtObject {
 
         loadCustomProfiles()
 
-        var profileArgPosition = args.indexOf("--profile")
-        if (profileArgPosition !== -1) {
-            var profileIndex = getProfileIndexByName(args[profileArgPosition + 1])
+        if (startupProfile !== "") {
+            var profileIndex = getProfileIndexByName(startupProfile)
             if (profileIndex !== -1) {
                 loadProfile(profileIndex)
             } else {
