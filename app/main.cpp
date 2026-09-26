@@ -122,7 +122,8 @@ int main(int argc, char *argv[])
     QStringList ownArgs = (cmdIndex == -1) ? args : args.mid(0, cmdIndex);
     QStringList cmdList = (cmdIndex == -1) ? QStringList() : args.mid(cmdIndex + 1);
     QVariant command(cmdList.empty() ? QVariant() : cmdList[0]);
-    QVariant commandArgs(cmdList.size() <= 1 ? QVariant() : QVariant(cmdList.mid(1)));
+    // Always a list, even if empty: QML passes it to setArgs(QStringList), which rejects undefined.
+    QStringList commandArgs = cmdList.mid(1);
     engine.rootContext()->setContextProperty("appVersion", appVersion);
     engine.rootContext()->setContextProperty("defaultCmd", command);
     engine.rootContext()->setContextProperty("defaultCmdArgs", commandArgs);

@@ -50,17 +50,20 @@ QtObject {
     property bool pendingFullscreen: startupFullscreen
 
     function createWindow() {
-        var window = windowComponent.createObject(null, { fullscreen: pendingFullscreen })
+        var window = windowComponent.createObject(null)
         if (!window)
             return
-        pendingFullscreen = false
 
         windowsModel.append({ window: window })
-        // Plain show() would reset the window to normal state, so pick the matching variant.
-        if (window.fullscreen)
-            window.showFullScreen()
-        else
+        if (pendingFullscreen) {
+            pendingFullscreen = false
+            // Set after creation rather than as an initial property: at creation time its change
+            // handler's visibility write conflicts with the declared visible. Don't follow with
+            // show(), which would reset the window to normal state.
+            window.fullscreen = true
+        } else {
             window.show()
+        }
         window.requestActivate()
     }
 
