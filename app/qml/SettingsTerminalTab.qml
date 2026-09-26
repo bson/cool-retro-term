@@ -124,11 +124,13 @@ ColumnLayout {
                 Slider {
                     Layout.fillWidth: true
                     id: fontScalingChanger
-                    onValueChanged: appSettings.fontScaling = value
+                    // onMoved rather than onValueChanged: when the range clamps the bound value
+                    // (--geom can fit past the maximum), that must not be written back.
+                    onMoved: appSettings.fontScaling = value
                     value: appSettings.fontScaling
                     stepSize: 0.05
                     from: appSettings.minimumFontScaling
-                    to: appSettings.maximumFontScaling
+                    to: Math.max(appSettings.maximumFontScaling, appSettings.fontScaling)
                 }
                 SizedLabel {
                     text: Math.round(fontScalingChanger.value * 100) + "%"

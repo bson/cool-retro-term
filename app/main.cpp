@@ -141,8 +141,11 @@ int main(int argc, char *argv[])
     const QString geomArg = getNamedArgument(ownArgs, "--geom");
     if (!geomArg.isEmpty()) {
         const QRegularExpressionMatch match = QRegularExpression("^(\\d+)x(\\d+)$").match(geomArg);
-        if (match.hasMatch() && match.captured(1).toInt() > 0 && match.captured(2).toInt() > 0)
-            startupGeometry = QSize(match.captured(2).toInt(), match.captured(1).toInt());
+        // captured() is empty on a failed match, so both come out as 0.
+        const int rows = match.captured(1).toInt();
+        const int cols = match.captured(2).toInt();
+        if (rows > 0 && cols > 0)
+            startupGeometry = QSize(cols, rows);
         else
             qWarning() << "Ignoring --geom" << geomArg << "- expected <rows>x<cols>, e.g. 24x80";
     }

@@ -49,21 +49,18 @@ QtObject {
     // --fullscreen applies only to the first window, not to later "New Window" ones.
     property bool pendingFullscreen: startupFullscreen
 
+    // The terminal that runs the --geom font scaling search; see PreprocessedTerminal.
+    property var geometryFitOwner: null
+
     function createWindow() {
-        var window = windowComponent.createObject(null)
+        // TerminalWindow shows itself once complete, in the state given here. Calling show()
+        // afterwards would reset it to normal state.
+        var window = windowComponent.createObject(null, { fullscreen: pendingFullscreen })
         if (!window)
             return
+        pendingFullscreen = false
 
         windowsModel.append({ window: window })
-        if (pendingFullscreen) {
-            pendingFullscreen = false
-            // Set after creation rather than as an initial property: at creation time its change
-            // handler's visibility write conflicts with the declared visible. Don't follow with
-            // show(), which would reset the window to normal state.
-            window.fullscreen = true
-        } else {
-            window.show()
-        }
         window.requestActivate()
     }
 

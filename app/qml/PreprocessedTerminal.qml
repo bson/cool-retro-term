@@ -71,6 +71,9 @@ Item{
 
         onFontScalingChanged: {
             terminalContainer.updateSources()
+            // The owner is the one changing it; everyone else re-pads to the new cell size.
+            if (appRoot.geometryFitOwner !== terminalContainer)
+                terminalContainer.restartGeometryFit()
         }
 
         onFontWidthChanged: {
@@ -95,11 +98,9 @@ Item{
         kterminal.update()
     }
 
-    // --geom: find the largest font scaling that still shows the requested lines and columns,
-    // then widen the margins until exactly that many are shown. The cell count depends on the
-    // margins, bitmap font scaling and the widget's own rounding, so this measures the result
-    // after each change rather than trying to compute it.
-    property size targetGeometry: startupGeometry
+    // --geom fit (see SUMMARY.md): measured rather than computed, since the cell count depends
+    // on margins, bitmap font scaling and the widget's own rounding.
+    property bool geometryFitPending: false
     property bool geometryScaleFitted: false
     property int geometryFitSteps: 0
     // Largest scaling seen to fit and smallest seen not to; once both are known, bisect.
@@ -107,19 +108,33 @@ Item{
     property real geometryFitHigh: Infinity
 
     function restartGeometryFit() {
-        if (targetGeometry.width <= 0)
+        if (startupGeometry.width <= 0)
             return
-        geometryScaleFitted = false
-        geometryFitSteps = 0
-        geometryFitLow = 0
-        geometryFitHigh = Infinity
-        kterminal.extraMargin = 0
-        kterminal.extraVerticalMargin = 0
+        // The reset itself waits for the timer, so a drag-resize doesn't relayout on every event.
+        geometryFitPending = true
         geometryFitTimer.restart()
     }
 
     function fitGeometry() {
-        // QMLTermWidget reports terminalSize as QSize(lines, columns), the reverse of targetGeometry.
+        if (geometryFitPending) {
+            geometryFitPending = false
+            // fontScaling is app-wide, so only one terminal searches for it; the others only pad.
+            if (!appRoot.geometryFitOwner)
+                appRoot.geometryFitOwner = terminalContainer
+            geometryScaleFitted = appRoot.geometryFitOwner !== terminalContainer
+            geometryFitSteps = 0
+            geometryFitLow = 0
+            geometryFitHigh = Infinity
+            // Both passes start from the unpadded cell count.
+            if (kterminal.extraMargin !== 0 || kterminal.extraVerticalMargin !== 0) {
+                kterminal.extraMargin = 0
+                kterminal.extraVerticalMargin = 0
+                geometryFitTimer.restart()
+                return
+            }
+        }
+
+        // QMLTermWidget reports terminalSize as QSize(lines, columns), the reverse of startupGeometry.
         var cols = kterminal.terminalSize.height
         var rows = kterminal.terminalSize.width
         if (appSettings.verbose)
@@ -132,7 +147,7 @@ Item{
 
         if (!geometryScaleFitted) {
             var scaling = appSettings.fontScaling
-            var ratio = Math.min(cols / targetGeometry.width, rows / targetGeometry.height)
+            var ratio = Math.min(cols / startupGeometry.width, rows / startupGeometry.height)
             if (ratio >= 1)
                 geometryFitLow = Math.max(geometryFitLow, scaling)
             else
@@ -162,8 +177,8 @@ Item{
             geometryScaleFitted = true
         }
 
-        var margin = Math.max(0, kterminal.extraMargin + marginStep(cols - targetGeometry.width, kterminal.width / cols))
-        var verticalMargin = Math.max(0, kterminal.extraVerticalMargin + marginStep(rows - targetGeometry.height, kterminal.height / rows))
+        var margin = Math.max(0, kterminal.extraMargin + marginStep(cols - startupGeometry.width, kterminal.width / cols))
+        var verticalMargin = Math.max(0, kterminal.extraVerticalMargin + marginStep(rows - startupGeometry.height, kterminal.height / rows))
         if (margin !== kterminal.extraMargin || verticalMargin !== kterminal.extraVerticalMargin) {
             kterminal.extraMargin = margin
             kterminal.extraVerticalMargin = verticalMargin
@@ -303,6 +318,8 @@ Item{
         }
         Component.onDestruction: {
             appSettings.fontManager.terminalFontChanged.disconnect(handleFontChanged);
+            if (appRoot.geometryFitOwner === terminalContainer)
+                appRoot.geometryFitOwner = null
         }
     }
 
@@ -323,9 +340,9 @@ Item{
     property alias contextmenu: menuLoader.item
 
     MouseArea {
-        // Window pixels; the --geom padding is in terminal pixels, which are scaled up on screen.
-        property real margin: appSettings.margin + kterminal.extraMargin * screenScaling * fontWidth
-        property real verticalMargin: appSettings.verticalMargin + kterminal.extraVerticalMargin * screenScaling
+        // kterminal's margins converted to window pixels, matching the totalWidth/totalHeight scaling.
+        property real margin: kterminal.margin * screenScaling * fontWidth
+        property real verticalMargin: kterminal.verticalMargin * screenScaling
         property real frameSize: appSettings.frameSize * terminalWindow.normalizedWindowScale
 
         acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton

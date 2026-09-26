@@ -40,6 +40,10 @@ With `--verbose`, each fit step is logged. Fedora's Qt suppresses debug output
 (including QML `console.log`) by default, so run with
 `QT_LOGGING_RULES="*.debug=true;qt.*.debug=false"` there.
 
+Only one terminal, the first to start a fit (`geometryFitOwner` in
+`main.qml`), searches for the scaling. The others only pad their margins, and
+re-pad when the scaling changes.
+
 The fit reruns whenever the terminal area is resized, but not after manual
 zooming. Because `fontScaling` is an app-wide setting, the fitted value is
 saved on exit like a manual zoom.

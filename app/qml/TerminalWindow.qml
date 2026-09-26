@@ -29,9 +29,13 @@ ApplicationWindow {
     width: 1024
     height: 768
 
-    // Show the window once it is ready.
+    // Show the window once it is ready, in the state requested at creation. Writing visibility
+    // here instead would conflict with visible: false.
     Component.onCompleted: {
-        visible = true
+        if (fullscreen)
+            showFullScreen()
+        else
+            visible = true
     }
 
     minimumWidth: 320
@@ -40,7 +44,8 @@ ApplicationWindow {
     visible: false
 
     property bool fullscreen: false
-    onFullscreenChanged: visibility = (fullscreen ? Window.FullScreen : Window.Windowed)
+    // Before onCompleted shows the window, writing visibility would conflict with visible: false.
+    onFullscreenChanged: if (visible) visibility = (fullscreen ? Window.FullScreen : Window.Windowed)
 
     menuBar: WindowMenu { }
 
