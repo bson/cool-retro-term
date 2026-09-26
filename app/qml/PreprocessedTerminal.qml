@@ -102,36 +102,62 @@ Item{
     property size targetGeometry: startupGeometry
     property bool geometryScaleFitted: false
     property int geometryFitSteps: 0
+    // Largest scaling seen to fit and smallest seen not to; once both are known, bisect.
+    property real geometryFitLow: 0
+    property real geometryFitHigh: Infinity
 
     function restartGeometryFit() {
         if (targetGeometry.width <= 0)
             return
         geometryScaleFitted = false
         geometryFitSteps = 0
+        geometryFitLow = 0
+        geometryFitHigh = Infinity
         kterminal.extraMargin = 0
         kterminal.extraVerticalMargin = 0
         geometryFitTimer.restart()
     }
 
     function fitGeometry() {
-        var cols = kterminal.terminalSize.width
-        var rows = kterminal.terminalSize.height
+        // QMLTermWidget reports terminalSize as QSize(lines, columns), the reverse of targetGeometry.
+        var cols = kterminal.terminalSize.height
+        var rows = kterminal.terminalSize.width
+        if (appSettings.verbose)
+            console.log("geom fit:", cols + "x" + rows, "cells, scaling", appSettings.fontScaling.toFixed(3),
+                        "area", width + "x" + height, "texture", kterminal.totalWidth + "x" + kterminal.totalHeight,
+                        "extra margins", kterminal.extraMargin, kterminal.extraVerticalMargin)
         // The cap guards against settling into a loop between two sizes.
         if (cols <= 0 || rows <= 0 || ++geometryFitSteps > 40)
             return
 
         if (!geometryScaleFitted) {
-            // Cell counts scale roughly inversely with the font scaling.
+            var scaling = appSettings.fontScaling
             var ratio = Math.min(cols / targetGeometry.width, rows / targetGeometry.height)
-            // Within a few percent is as close as whole cells and margins allow; the rest is padded.
-            if (ratio < 1 || ratio > 1.03) {
-                var scaling = appSettings.fontScaling * (ratio >= 1 ? ratio * 0.995 : Math.min(ratio, 0.98))
-                scaling = Math.max(appSettings.minimumFontScaling, Math.min(appSettings.maximumFontScaling, scaling))
-                if (Math.abs(scaling - appSettings.fontScaling) > 0.001) {
-                    appSettings.fontScaling = scaling
-                    geometryFitTimer.restart()
-                    return
-                }
+            if (ratio >= 1)
+                geometryFitLow = Math.max(geometryFitLow, scaling)
+            else
+                geometryFitHigh = Math.min(geometryFitHigh, scaling)
+
+            var next
+            if (ratio >= 1 && ratio < 1.03) {
+                // Within a few percent is as close as whole cells allow; the margins pad the rest.
+                next = scaling
+            } else if (geometryFitLow > 0 && geometryFitHigh < Infinity) {
+                // Proportional guesses overshoot because the line count doesn't scale exactly
+                // inversely (line spacing is rounded per scaling), so bisect once bracketed.
+                next = geometryFitHigh - geometryFitLow < 0.01 * geometryFitLow
+                    ? geometryFitLow : (geometryFitLow + geometryFitHigh) / 2
+            } else {
+                // Cell counts scale roughly inversely with the font scaling.
+                next = scaling * ratio * (ratio >= 1 ? 0.995 : 0.98)
+            }
+            // No upper clamp: maximumFontScaling limits manual zoom, but on a large screen the
+            // requested geometry can need more. Shrinking below the minimum is still refused.
+            next = Math.max(appSettings.minimumFontScaling, next)
+            if (Math.abs(next - scaling) > 0.001) {
+                appSettings.fontScaling = next
+                geometryFitTimer.restart()
+                return
             }
             geometryScaleFitted = true
         }

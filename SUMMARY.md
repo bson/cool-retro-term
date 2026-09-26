@@ -28,6 +28,18 @@ the text. It measures instead of calculating because the count depends on
 margins, bitmap-font scaling and QMLTermWidget's own rounding. A debounce timer
 waits for each font change to settle before measuring again.
 
+The scaling search starts with proportional guesses, then bisects once one
+scaling that fits and one that doesn't are known. Line counts don't scale
+exactly inversely with `fontScaling`, so proportional steps alone oscillate.
+The fit may exceed `maximumFontScaling`, which only limits manual zoom.
+
+Pitfall: QMLTermWidget's `terminalSize` is `QSize(lines, columns)`, the reverse
+of `startupGeometry`.
+
+With `--verbose`, each fit step is logged. Fedora's Qt suppresses debug output
+(including QML `console.log`) by default, so run with
+`QT_LOGGING_RULES="*.debug=true;qt.*.debug=false"` there.
+
 The fit reruns whenever the terminal area is resized, but not after manual
 zooming. Because `fontScaling` is an app-wide setting, the fitted value is
 saved on exit like a manual zoom.
