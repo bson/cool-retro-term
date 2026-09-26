@@ -5,6 +5,8 @@
 #include <QStringList>
 
 #include <QDir>
+#include <QRegularExpression>
+#include <QSize>
 
 #include <QtWidgets/QApplication>
 #include <QIcon>
@@ -64,11 +66,12 @@ int main(int argc, char *argv[])
 
     if (argc>1 && (!strcmp(argv[1],"-h") || !strcmp(argv[1],"--help"))) {
         QTextStream cout(stdout, QIODevice::WriteOnly);
-        cout << "Usage: " << argv[0] << " [--default-settings] [--workdir <dir>] [-p|--profile <prof>] [--fullscreen] [-h|--help] [-e <cmd> [args...]]" << Qt::endl;
+        cout << "Usage: " << argv[0] << " [--default-settings] [--workdir <dir>] [-p|--profile <prof>] [--fullscreen] [--geom <rows>x<cols>] [-h|--help] [-e <cmd> [args...]]" << Qt::endl;
         cout << "  --default-settings  Run cool-retro-term with the default settings" << Qt::endl;
         cout << "  --workdir <dir>     Change working directory to 'dir'" << Qt::endl;
         cout << "  -e <cmd>            Command to execute. This option will catch all following arguments, so use it as the last option." << Qt::endl;
         cout << "  --fullscreen        Run cool-retro-term in fullscreen." << Qt::endl;
+        cout << "  --geom <rows>x<cols> Scale the font so the terminal shows exactly this many lines and columns, e.g. 24x80." << Qt::endl;
         cout << "  -p|--profile <prof> Run cool-retro-term with the given profile." << Qt::endl;
         cout << "  -h|--help           Print this help." << Qt::endl;
         cout << "  --verbose           Print additional information such as profiles and settings." << Qt::endl;
@@ -132,6 +135,18 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty("startupProfile",
         getNamedArgument(ownArgs, "--profile", getNamedArgument(ownArgs, "-p")));
     engine.rootContext()->setContextProperty("startupFullscreen", ownArgs.contains("--fullscreen"));
+
+    // Width is columns and height is lines; an invalid QSize (-1x-1) means no --geom.
+    QSize startupGeometry;
+    const QString geomArg = getNamedArgument(ownArgs, "--geom");
+    if (!geomArg.isEmpty()) {
+        const QRegularExpressionMatch match = QRegularExpression("^(\\d+)x(\\d+)$").match(geomArg);
+        if (match.hasMatch() && match.captured(1).toInt() > 0 && match.captured(2).toInt() > 0)
+            startupGeometry = QSize(match.captured(2).toInt(), match.captured(1).toInt());
+        else
+            qWarning() << "Ignoring --geom" << geomArg << "- expected <rows>x<cols>, e.g. 24x80";
+    }
+    engine.rootContext()->setContextProperty("startupGeometry", startupGeometry);
     engine.rootContext()->setContextProperty("fileIO", &fileIO);
 
     // Manage import paths for Linux and OSX.

@@ -16,6 +16,22 @@ fonts with a base width of 0.5 (e.g. the DEC VT100 font) stretch to half
 width. So at 100% the side margins of such fonts display narrower than the top
 and bottom.
 
+## Fixed terminal geometry (`--geom`)
+
+`--geom <rows>x<cols>` (e.g. `24x80`) is parsed in `app/main.cpp` and handed
+to QML as the `startupGeometry` context property (width = columns, height =
+lines). `fitGeometry()` in `PreprocessedTerminal.qml` then measures the
+terminal's actual cell count and adjusts the global `fontScaling` until the
+requested size just fits. After that it widens the terminal's
+`extraMargin`/`extraVerticalMargin` to trim the surplus cells, which centers
+the text. It measures instead of calculating because the count depends on
+margins, bitmap-font scaling and QMLTermWidget's own rounding. A debounce timer
+waits for each font change to settle before measuring again.
+
+The fit reruns whenever the terminal area is resized, but not after manual
+zooming. Because `fontScaling` is an app-wide setting, the fitted value is
+saved on exit like a manual zoom.
+
 ## Backspace sends Delete
 
 The per-profile `backspaceSendsDelete` option (Advanced → Miscellaneous)
