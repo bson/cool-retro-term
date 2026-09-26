@@ -347,8 +347,21 @@ Item{
 
         acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
         anchors.fill: parent
-        cursorShape: kterminal.terminalUsesMouse ? Qt.ArrowCursor : Qt.IBeamCursor
+        // Hover is only needed to notice the pointer moving so it can be hidden again later.
+        hoverEnabled: true
+        // The pointer shows only while the timer runs, so it's hidden after 2s without mouse activity.
+        cursorShape: pointerHideTimer.running
+                     ? (kterminal.terminalUsesMouse ? Qt.ArrowCursor : Qt.IBeamCursor)
+                     : Qt.BlankCursor
+
+        Timer {
+            id: pointerHideTimer
+            interval: 2000
+        }
+
+        onEntered: pointerHideTimer.restart()
         onWheel: function(wheel) {
+            pointerHideTimer.restart()
             if (wheel.modifiers & Qt.ControlModifier) {
                wheel.angleDelta.y > 0 ? zoomIn.trigger() : zoomOut.trigger();
             } else {
@@ -361,6 +374,7 @@ Item{
             kterminal.simulateMouseDoubleClick(coord.x, coord.y, mouse.button, mouse.buttons, mouse.modifiers);
         }
         onPressed: function(mouse) {
+            pointerHideTimer.restart()
             kterminal.forceActiveFocus()
             if ((!kterminal.terminalUsesMouse || mouse.modifiers & Qt.ShiftModifier) && mouse.button == Qt.RightButton) {
                 contextmenu.popup();
@@ -374,6 +388,10 @@ Item{
             kterminal.simulateMouseRelease(coord.x, coord.y, mouse.button, mouse.buttons, mouse.modifiers);
         }
         onPositionChanged: function(mouse) {
+            pointerHideTimer.restart()
+            // Without hover these only arrived during a drag, so keep plain hover moves from the terminal.
+            if (!pressed)
+                return
             var coord = correctDistortion(mouse.x, mouse.y);
             kterminal.simulateMouseMove(coord.x, coord.y, mouse.button, mouse.buttons, mouse.modifiers);
         }

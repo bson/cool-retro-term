@@ -29,23 +29,13 @@ ApplicationWindow {
     width: 1024
     height: 768
 
-    // Show the window once it is ready, in the state requested at creation. Writing visibility
-    // here instead would conflict with visible: false.
-    Component.onCompleted: {
-        if (fullscreen)
-            showFullScreen()
-        else
-            visible = true
-    }
-
     minimumWidth: 320
     minimumHeight: 240
 
-    visible: false
-
     property bool fullscreen: false
-    // Before onCompleted shows the window, writing visibility would conflict with visible: false.
-    onFullscreenChanged: if (visible) visibility = (fullscreen ? Window.FullScreen : Window.Windowed)
+    // Declared, not set imperatively: older Qt applies a declared visible after onCompleted,
+    // undoing a showFullScreen() made there. Don't also declare visible; the two conflict.
+    visibility: fullscreen ? Window.FullScreen : Window.Windowed
 
     menuBar: WindowMenu { }
 

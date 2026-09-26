@@ -53,8 +53,8 @@ QtObject {
     property var geometryFitOwner: null
 
     function createWindow() {
-        // TerminalWindow shows itself once complete, in the state given here. Calling show()
-        // afterwards would reset it to normal state.
+        // TerminalWindow shows itself in the state given here. Calling show() afterwards would
+        // reset it to normal state.
         var window = windowComponent.createObject(null, { fullscreen: pendingFullscreen })
         if (!window)
             return
